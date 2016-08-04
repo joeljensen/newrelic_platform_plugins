@@ -2,6 +2,7 @@
 
 The New Relic Resque Plugin enables monitoring of Resque, a library for processing background jobs, reporting the following data for a specified instance:
 
+* Dynamicly monitors all namespaces on redis server OR select only a few.
 * Number of working workers
 * Pending jobs number
 * Total failed jobs number
@@ -32,6 +33,8 @@ The Resque monitoring Plugin for New Relic requires the following:
 
     3.2. add the Redis connection string: 'hostname:port' or 'hostname:port:db' or 'redis://user:password@hostname:port:db'
 
+    3.3  If you would like the plugin to monitor all the namespaces on a particular redis server, set the agent name to "dynamic"
+    
 4. Execute
 
     `newrelic_resque_agent run`

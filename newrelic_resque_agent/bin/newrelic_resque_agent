@@ -4,8 +4,52 @@ $stdout.sync = true
 $LOAD_PATH.unshift File.expand_path "../../lib", __FILE__
 require "newrelic_resque_agent"
 require 'optparse'
+require 'resque'
+require 'redis'
+require 'yaml'
 
+
+# Register and run the agent
 NewRelic::Plugin::Config.config_file = "/etc/newrelic/newrelic_resque_agent.yml"
+
+def make_dynamic_file
+  agents = NewRelic::Plugin::Config.config.agents.collect do |agent_key,agent|
+
+    if agent_key == "dynamic"
+      
+      if agent['redis'].nil?
+        raise "Redis connection URL "
+      end
+
+      Resque.redis = agent['redis']
+      
+      # get a list of namespaces
+      if agent['namespace'].nil?
+        resque_namespaces = Resque.redis.keys("*:queues").map { |key| key.gsub(/:queues$/, '').prepend("resque:") }
+      else
+        resque_namespaces = [agent['namespace']].flatten
+      end
+
+
+      resque_namespaces.each_with_object({}) do |rn, hsh|
+        clone = agent.clone 
+        clone['namespace'] = rn
+        rn = rn.match(/resque:(.*):.*/)[1].downcase
+        hsh[rn] = clone
+      end
+
+    else
+      {agent_key => agent}
+    end
+  end
+
+  new_agents = agents.reduce({},:merge)
+  new_agents.delete('dynamic')
+  new_config = NewRelic::Plugin::Config.config.options
+  new_config['agents'] = new_agents
+  YAML.dump(new_config)
+end
+
 
 options = OptionParser.new do |opts|
   opts.banner = <<-EOF
@@ -42,6 +86,11 @@ if args.first == "run"
     puts "Run 'sudo newrelic_resque_agent install' for setup config"
     exit 1
   end
+
+  res = make_dynamic_file.to_s
+  NewRelic::Plugin::Config.config_file = nil
+  NewRelic::Plugin::Config.config_yaml = res
+
   NewRelicResqueAgent.run
 elsif args.first == "install"
   config_file = File.read(File.expand_path("../../config/newrelic_plugin.yml.example", __FILE__))

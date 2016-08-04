@@ -18,9 +18,10 @@ newrelic:
   verbose: 0
 #
 # Agent Configuration:
-#
+# setting the agent name to "dynamic" will make one agent per namespace.  
+
 agents:
-  my_resque_1:
+  my_resque_1:   # <= this agent name could be dynamic
     # Redis connection string: 'hostname:port' or 'hostname:port:db' or 'redis://user:password@hostname:port:db'
     redis: localhost:6379
     # Resque namespace

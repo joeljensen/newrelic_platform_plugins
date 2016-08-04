@@ -9,7 +9,7 @@ require 'redis'
 
 module NewRelicResqueAgent
   
-  VERSION = '1.0.1'
+  VERSION = '1.0.2'
 
   class Agent < NewRelic::Plugin::Agent::Base
 
@@ -42,8 +42,8 @@ module NewRelicResqueAgent
         report_metric "Jobs/Rate/Failed", "Jobs/Second",           @total_failed.process(info[:failed])
         report_metric "Queues", "Queues",                     info[:queues]
         report_metric "Jobs/Failed", "Jobs",                  info[:failed] || 0
-        
-        
+
+
 
       rescue Redis::TimeoutError
         raise 'Redis server timeout'
